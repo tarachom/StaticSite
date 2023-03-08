@@ -84,21 +84,11 @@ class FirstWindow : Window
 
     void OpenDB()
     {
-        Page.Conn = new SqliteConnection("Data Source=database.db");
+        Page.Conn = new SqliteConnection($"Data Source={AppContext.BaseDirectory}database.db;");
         Page.Conn.Open();
 
         Page.CreateDataBase();
-
-        /*
-        Page page = new Page
-        {
-            GroupName = Groups.XSLT.ToString(),
-            Name = "test2",
-            Value = "test3"
-        };
-
-        Page.InsertPage(page);
-        */
+        Page.Vacuum();
     }
 
     void CloseDB()
@@ -114,7 +104,7 @@ class FirstWindow : Window
     void AddColumn()
     {
         treeView.AppendColumn(new TreeViewColumn("Розділи", new CellRendererText(), "text", (int)Columns.Name));
-        treeView.AppendColumn(new TreeViewColumn("Код", new CellRendererText(), "text", (int)Columns.Code));
+        treeView.AppendColumn(new TreeViewColumn("Код", new CellRendererText(), "text", (int)Columns.Code) { Visible = false });
     }
 
     public void LoadGroups()
@@ -167,7 +157,7 @@ class FirstWindow : Window
                     pageBox.SetValue();
 
                     string smallName = page.Name.Length > maxName ? page.Name.Substring(0, maxName) : page.Name;
-                    CreateNotebookPage($"{smallName} *", pageBox);
+                    CreateNotebookPage($"{smallName}", pageBox);
                 }
             }
         }

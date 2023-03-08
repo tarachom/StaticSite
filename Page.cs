@@ -31,6 +31,16 @@ public class Page
         }
     }
 
+    public static void Vacuum()
+    {
+        string query = @"VACUUM";
+
+        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+        {
+            command.ExecuteNonQuery();
+        }
+    }
+
     public static void InsertPage(Page page)
     {
         string query = @"
