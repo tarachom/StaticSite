@@ -75,7 +75,7 @@ public class Page
     public static void DeletePage(Page page)
     {
         string query = @"
-        DELETE pages
+        DELETE FROM pages
         WHERE id = @id
         ";
 

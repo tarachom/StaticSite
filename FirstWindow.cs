@@ -209,12 +209,15 @@ class FirstWindow : Window
         toolbar.Add(addButton);
 
         ToolButton upButton = new ToolButton(Stock.Edit) { Label = "Редагувати", IsImportant = true, TooltipText = "Редагувати" };
+        upButton.Clicked += EditButtonClick;
         toolbar.Add(upButton);
 
         ToolButton copyButton = new ToolButton(Stock.Copy) { Label = "Копіювати", IsImportant = true, TooltipText = "Копіювати" };
+        copyButton.Clicked += CopyButtonClick;
         toolbar.Add(copyButton);
 
         ToolButton deleteButton = new ToolButton(Stock.Delete) { Label = "Видалити", IsImportant = true, TooltipText = "Видалити" };
+        deleteButton.Clicked += DeleteButtonClick;
         toolbar.Add(deleteButton);
 
         hBox.PackStart(toolbar, false, false, 2);
@@ -245,6 +248,65 @@ class FirstWindow : Window
             MenuToolButton addButton = (MenuToolButton)sender;
             Menu Menu = (Menu)addButton.Menu;
             Menu.Popup();
+        }
+    }
+
+    void EditButtonClick(object? sender, EventArgs args)
+    {
+        OnRowActivated(sender!, new RowActivatedArgs());
+    }
+
+    void CopyButtonClick(object? sender, EventArgs args)
+    {
+        if (treeView.Selection.CountSelectedRows() != 0)
+        {
+            TreeIter iter;
+            treeView.Model.GetIter(out iter, treeView.Selection.GetSelectedRows()[0]);
+
+            string id = (string)treeView.Model.GetValue(iter, (int)Columns.Code);
+
+            if (!String.IsNullOrEmpty(id))
+            {
+                Page? page = Page.SelectPage(long.Parse(id));
+
+                if (page != null)
+                {
+                    Page newPage = new Page
+                    {
+                        Name = page.Name,
+                        GroupName = page.GroupName,
+                        Value = page.Value
+                    };
+
+                    Page.InsertPage(newPage);
+                    LoadGroups();
+                }
+            }
+        }
+    }
+
+    void DeleteButtonClick(object? sender, EventArgs args)
+    {
+        if (treeView.Selection.CountSelectedRows() != 0)
+        {
+            TreeIter iter;
+            treeView.Model.GetIter(out iter, treeView.Selection.GetSelectedRows()[0]);
+
+            string id = (string)treeView.Model.GetValue(iter, (int)Columns.Code);
+
+            if (!String.IsNullOrEmpty(id))
+            {
+                Page? page = Page.SelectPage(long.Parse(id));
+
+                if (page != null)
+                {
+                    if (Message.Request(Program.firstWindow, "Видалити запис?") == ResponseType.Yes)
+                    {
+                        Page.DeletePage(page);
+                        LoadGroups();
+                    }
+                }
+            }
         }
     }
 
