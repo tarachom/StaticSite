@@ -18,7 +18,10 @@ mono_crash.*
 
 #Configurator3
 *.dll
-database.db
+*.txt
+*.cache
+
+*.db
 
 # Build results
 #[Dd]ebug/
