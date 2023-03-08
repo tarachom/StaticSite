@@ -24,6 +24,7 @@ mono_crash.*
 *.db
 *.a
 *.dylib
+obj/
 
 # Build results
 #[Dd]ebug/
