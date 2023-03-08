@@ -20,8 +20,10 @@ mono_crash.*
 *.dll
 *.txt
 *.cache
-
+*.so
 *.db
+*.a
+*.dylib
 
 # Build results
 #[Dd]ebug/
