@@ -38,6 +38,8 @@ class FirstWindow : Window
         XSLT
     }
 
+    int maxName = 30;
+
     public FirstWindow() : base("StaticSite")
     {
         SetDefaultSize(1200, 900);
@@ -133,7 +135,11 @@ class FirstWindow : Window
     void LoadPages(TreeIter itemIter, string groupName)
     {
         foreach (Page page in Page.SelectPages(groupName))
-            treeStore.AppendValues(itemIter, page.Name, page.ID);
+        {
+            string smallName = page.Name.Length > maxName ? page.Name.Substring(0, maxName) : page.Name;
+            treeStore.AppendValues(itemIter, smallName, page.ID);
+        }
+
 
         IsExpand(itemIter);
     }
@@ -160,7 +166,8 @@ class FirstWindow : Window
 
                     pageBox.SetValue();
 
-                    CreateNotebookPage($"{page.Name} *", pageBox);
+                    string smallName = page.Name.Length > maxName ? page.Name.Substring(0, maxName) : page.Name;
+                    CreateNotebookPage($"{smallName} *", pageBox);
                 }
             }
         }
