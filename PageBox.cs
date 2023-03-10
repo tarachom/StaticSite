@@ -61,41 +61,111 @@ public class PageBox : VBox
 
         Toolbar toolbar = new Toolbar();
 
-        ToolButton upButton = new ToolButton(Stock.Edit) { Label = "P", IsImportant = true, TooltipText = "P" };
-        upButton.Clicked += EditButtonClick;
-        toolbar.Add(upButton);
+        ToolButton tagP = new ToolButton(Stock.Edit) { Label = "P", IsImportant = true, TooltipText = "P" };
+        tagP.Clicked += (object? sender, EventArgs args) => { AddTag(("p", "")); };
+        toolbar.Add(tagP);
 
-        // ToolButton copyButton = new ToolButton(Stock.Copy) { TooltipText = "Копіювати" };
-        // copyButton.Clicked += CopyButtonClick;
-        // toolbar.Add(copyButton);
+        ToolButton tagh5 = new ToolButton(Stock.Edit) { Label = "h5", IsImportant = true, TooltipText = "h5" };
+        tagh5.Clicked += (object? sender, EventArgs args) => { AddTag(("h5", "")); };
+        toolbar.Add(tagh5);
 
-        // ToolButton deleteButton = new ToolButton(Stock.Delete) { TooltipText = "Видалити" };
-        // deleteButton.Clicked += DeleteButtonClick;
-        // toolbar.Add(deleteButton);
+        ToolButton tagA = new ToolButton(Stock.Edit) { Label = "A", IsImportant = true, TooltipText = "A" };
+        tagA.Clicked += (object? sender, EventArgs args) => { AddTag(("a", "target=\"_blank\" href=\"\"")); };
+        toolbar.Add(tagA);
 
-        // //Separator
-        // ToolItem toolItemSeparator = new ToolItem();
-        // toolItemSeparator.Add(new Separator(Orientation.Horizontal));
-        // toolbar.Add(toolItemSeparator);
+        ToolButton tagCode = new ToolButton(Stock.Edit) { Label = "Code", IsImportant = true, TooltipText = "Code" };
+        tagCode.Clicked += (object? sender, EventArgs args) => { AddTag(("pre", ""), "code"); };
+        toolbar.Add(tagCode);
 
-        // ToolButton buildButton = new ToolButton(Stock.Convert) { Label = "Збудувати", IsImportant = true, TooltipText = "Збудувати" };
-        // buildButton.Clicked += BuildButtonClick;
-        // toolbar.Add(buildButton);
+        ToolButton tagBR = new ToolButton(Stock.Edit) { Label = "BR", IsImportant = true, TooltipText = "BR" };
+        tagBR.Clicked += (object? sender, EventArgs args) => { AddOneTag(("br", "")); };
+        toolbar.Add(tagBR);
+
+        ToolButton tagHR = new ToolButton(Stock.Edit) { Label = "HR", IsImportant = true, TooltipText = "HR" };
+        tagHR.Clicked += (object? sender, EventArgs args) => { AddOneTag(("hr", "")); };
+        toolbar.Add(tagHR);
+
+        ToolButton tagComment = new ToolButton(Stock.Edit) { Label = "Comment", IsImportant = true, TooltipText = "Comment" };
+        tagComment.Clicked += (object? sender, EventArgs args) => { AddCommentTag(); };
+        toolbar.Add(tagComment);
+
+        ToolButton tagEscape = new ToolButton(Stock.Edit) { Label = "Escape", IsImportant = true, TooltipText = "Escape" };
+        tagEscape.Clicked += (object? sender, EventArgs args) => { EscapeCode(); };
+        toolbar.Add(tagEscape);
 
         hBox.PackStart(toolbar, false, false, 2);
 
         return hBox;
     }
 
-    void EditButtonClick(object? sender, EventArgs args)
+    void AddTag((string, string) tagAndAttr, string tag2 = "")
     {
-        Gtk.TextIter A;
-        Gtk.TextIter B;
-        if (Вміст.Buffer.GetSelectionBounds(out A, out B))
+        Gtk.TextIter start;
+        Gtk.TextIter end;
+
+        Вміст.Buffer.GetSelectionBounds(out start, out end);
+
         {
-            string text =  Вміст.Buffer.GetText(A, B, true);
-            Вміст.Buffer.DeleteInteractive(ref A,ref B, true);
-            Вміст.Buffer.Insert(ref A, "<p>" + text + "</p>");
+            string selectedText = Вміст.Buffer.GetText(start, end, true);
+            Вміст.Buffer.DeleteInteractive(ref start, ref end, true);
+
+            selectedText = $"<{tagAndAttr.Item1} {tagAndAttr.Item2}>" + selectedText + $"</{tagAndAttr.Item1}>";
+
+            if (!String.IsNullOrEmpty(tag2))
+                selectedText = $"<{tag2}>" + selectedText + $"</{tag2}>";
+
+            Вміст.Buffer.Insert(ref start, selectedText);
+        }
+    }
+
+    void AddOneTag((string, string) tagAndAttr)
+    {
+        Gtk.TextIter start;
+        Gtk.TextIter end;
+
+        Вміст.Buffer.GetSelectionBounds(out start, out end);
+
+        {
+            string selectedText = Вміст.Buffer.GetText(start, end, true);
+            Вміст.Buffer.DeleteInteractive(ref start, ref end, true);
+
+            selectedText = selectedText + $"<{tagAndAttr.Item1} {tagAndAttr.Item2} />";
+
+            Вміст.Buffer.Insert(ref start, selectedText);
+        }
+    }
+
+void AddCommentTag()
+{
+    Gtk.TextIter start;
+    Gtk.TextIter end;
+
+    Вміст.Buffer.GetSelectionBounds(out start, out end);
+
+    {
+        string selectedText = Вміст.Buffer.GetText(start, end, true);
+        Вміст.Buffer.DeleteInteractive(ref start, ref end, true);
+
+        selectedText = $"<!-- [ " + selectedText + " ] -->";
+
+        Вміст.Buffer.Insert(ref start, selectedText);
+    }
+}
+
+    void EscapeCode()
+    {
+        Gtk.TextIter start;
+        Gtk.TextIter end;
+
+        if (Вміст.Buffer.GetSelectionBounds(out start, out end))
+        {
+            string selectedText = Вміст.Buffer.GetText(start, end, true);
+            Вміст.Buffer.DeleteInteractive(ref start, ref end, true);
+
+            selectedText = selectedText.Replace("<", "&lt;");
+            selectedText = selectedText.Replace(">", "&gt;");
+
+            Вміст.Buffer.Insert(ref start, selectedText);
         }
     }
 

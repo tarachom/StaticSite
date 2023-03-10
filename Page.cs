@@ -36,132 +36,132 @@ CREATE INDEX IF NOT EXISTS group_name_idx ON pages(group_name);
         }
     }
 
-    public static void Vacuum()
-    {
-        string query = @"VACUUM";
+public static void Vacuum()
+{
+    string query = @"VACUUM";
 
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+    {
+        command.ExecuteNonQuery();
+    }
+}
+
+public static void InsertPage(Page page)
+{
+    string query = @"
+    INSERT INTO pages(name, group_name, value)
+    VALUES(@name, @group_name, @value)
+    RETURNING id";
+
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+    {
+        command.Parameters.AddWithValue("name", page.Name);
+        command.Parameters.AddWithValue("group_name", page.GroupName);
+        command.Parameters.AddWithValue("value", page.Value);
+
+        object? result = command.ExecuteScalar();
+
+        if (result != null)
         {
-            command.ExecuteNonQuery();
+            page.ID = (long)result;
+            page.IsNew = false;
         }
     }
+}
 
-    public static void InsertPage(Page page)
-    {
-        string query = @"
-INSERT INTO pages(name, group_name, value)
-VALUES(@name, @group_name, @value)
-RETURNING id";
-
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
-        {
-            command.Parameters.AddWithValue("name", page.Name);
-            command.Parameters.AddWithValue("group_name", page.GroupName);
-            command.Parameters.AddWithValue("value", page.Value);
-
-            object? result = command.ExecuteScalar();
-
-            if (result != null)
-            {
-                page.ID = (long)result;
-                page.IsNew = false;
-            }
-        }
-    }
-
-    public static void UpdatePage(Page page)
-    {
-        string query = @"
-UPDATE pages 
-SET 
+public static void UpdatePage(Page page)
+{
+    string query = @"
+    UPDATE pages 
+    SET 
     name = @name, 
     group_name = @group_name, 
     value = @value
-WHERE id = @id
-";
+    WHERE id = @id
+    ";
 
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
-        {
-            command.Parameters.AddWithValue("id", page.ID);
-            command.Parameters.AddWithValue("name", page.Name);
-            command.Parameters.AddWithValue("group_name", page.GroupName);
-            command.Parameters.AddWithValue("value", page.Value);
-            command.ExecuteNonQuery();
-        }
-    }
-
-    public static void DeletePage(Page page)
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
     {
-        string query = @"DELETE FROM pages WHERE id = @id";
-
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
-        {
-            command.Parameters.AddWithValue("id", page.ID);
-            command.ExecuteNonQuery();
-        }
+        command.Parameters.AddWithValue("id", page.ID);
+        command.Parameters.AddWithValue("name", page.Name);
+        command.Parameters.AddWithValue("group_name", page.GroupName);
+        command.Parameters.AddWithValue("value", page.Value);
+        command.ExecuteNonQuery();
     }
+}
 
-    public static Page? SelectPage(long id)
+public static void DeletePage(Page page)
+{
+    string query = @"DELETE FROM pages WHERE id = @id";
+
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
     {
-        Page? page = null;
+        command.Parameters.AddWithValue("id", page.ID);
+        command.ExecuteNonQuery();
+    }
+}
 
-        string query = @"
-SELECT id, name, group_name, value
-FROM pages
-WHERE id = @id
-";
+public static Page? SelectPage(long id)
+{
+    Page? page = null;
 
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+    string query = @"
+    SELECT id, name, group_name, value
+    FROM pages
+    WHERE id = @id
+    ";
+
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+    {
+        command.Parameters.AddWithValue("id", id);
+        SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
         {
-            command.Parameters.AddWithValue("id", id);
-            SqliteDataReader reader = command.ExecuteReader();
-
-            while (reader.Read())
+            page = new Page
             {
-                page = new Page
-                {
-                    ID = (long)reader["id"],
-                    Name = (string)reader["name"],
-                    GroupName = (string)reader["group_name"],
-                    Value = (string)reader["value"]
-                };
-            }
-
-            reader.Close();
+                ID = (long)reader["id"],
+                Name = (string)reader["name"],
+                GroupName = (string)reader["group_name"],
+                Value = (string)reader["value"]
+            };
         }
 
-        return page;
+        reader.Close();
     }
 
-    public static List<Page> SelectPages(string groupName)
+    return page;
+}
+
+public static List<Page> SelectPages(string groupName)
+{
+    List<Page> listPages = new List<Page>();
+
+    string query = @"
+    SELECT id, name, group_name, value
+    FROM pages
+    WHERE group_name = @group_name
+    ";
+
+    using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
     {
-        List<Page> listPages = new List<Page>();
+        command.Parameters.AddWithValue("group_name", groupName);
+        SqliteDataReader reader = command.ExecuteReader();
 
-        string query = @"
-SELECT id, name, group_name, value
-FROM pages
-WHERE group_name = @group_name
-";
-
-        using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
+        while (reader.Read())
         {
-            command.Parameters.AddWithValue("group_name", groupName);
-            SqliteDataReader reader = command.ExecuteReader();
-
-            while (reader.Read())
+            listPages.Add(new Page
             {
-                listPages.Add(new Page
-                {
-                    ID = (long)reader["id"],
-                    Name = (string)reader["name"],
-                    GroupName = (string)reader["group_name"],
-                    Value = (string)reader["value"]
-                });
-            }
-
-            reader.Close();
+                ID = (long)reader["id"],
+                Name = (string)reader["name"],
+                GroupName = (string)reader["group_name"],
+                Value = (string)reader["value"]
+            });
         }
 
-        return listPages;
+        reader.Close();
     }
+
+    return listPages;
+}
 }

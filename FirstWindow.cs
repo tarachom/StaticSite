@@ -47,6 +47,8 @@ class FirstWindow : Window
     {
         SetDefaultSize(1200, 900);
         SetPosition(WindowPosition.Center);
+        Maximize();
+
         BorderWidth = 5;
 
         DeleteEvent += delegate
@@ -85,14 +87,14 @@ class FirstWindow : Window
 
     #region SQL
 
-    void OpenDB()
-    {
-        Page.Conn = new SqliteConnection($"Data Source={AppContext.BaseDirectory}database.db;");
-        Page.Conn.Open();
+void OpenDB()
+{
+    Page.Conn = new SqliteConnection($"Data Source={AppContext.BaseDirectory}database.db;");
+    Page.Conn.Open();
 
-        Page.CreateDataBase();
-        Page.Vacuum();
-    }
+    Page.CreateDataBase();
+    Page.Vacuum();
+}
 
     void CloseDB()
     {
