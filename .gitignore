@@ -24,7 +24,10 @@ mono_crash.*
 *.db
 *.a
 *.dylib
+*.xml
+*.html
 obj/
+html/
 
 # Build results
 #[Dd]ebug/

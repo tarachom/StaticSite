@@ -10,20 +10,25 @@ public class Page
     public string Name { get; set; } = "";
     public string Value { get; set; } = "";
 
+    public static string ToHtml(string value)
+    {
+        return value.Replace("\n", "<br />");
+    }
+
     public static SqliteConnection? Conn { get; set; } = null;
     public static void CreateDataBase()
     {
         string query = @"
-        CREATE TABLE IF NOT EXISTS pages 
-        (
-            id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-            name text NOT NULL DEFAULT '',
-            group_name text NOT NULL DEFAULT '',
-            value text NOT NULL DEFAULT ''
-        );
-        
-        CREATE INDEX IF NOT EXISTS group_name_idx ON pages(group_name);
-        ";
+CREATE TABLE IF NOT EXISTS pages 
+(
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name text NOT NULL DEFAULT '',
+    group_name text NOT NULL DEFAULT '',
+    value text NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS group_name_idx ON pages(group_name);
+";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {
@@ -44,9 +49,9 @@ public class Page
     public static void InsertPage(Page page)
     {
         string query = @"
-        INSERT INTO pages(name, group_name, value)
-        VALUES(@name, @group_name, @value)
-        RETURNING id";
+INSERT INTO pages(name, group_name, value)
+VALUES(@name, @group_name, @value)
+RETURNING id";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {
@@ -67,10 +72,13 @@ public class Page
     public static void UpdatePage(Page page)
     {
         string query = @"
-        UPDATE pages
-        SET name = @name, group_name = @group_name, value = @value
-        WHERE id = @id
-        ";
+UPDATE pages 
+SET 
+    name = @name, 
+    group_name = @group_name, 
+    value = @value
+WHERE id = @id
+";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {
@@ -84,10 +92,7 @@ public class Page
 
     public static void DeletePage(Page page)
     {
-        string query = @"
-        DELETE FROM pages
-        WHERE id = @id
-        ";
+        string query = @"DELETE FROM pages WHERE id = @id";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {
@@ -101,10 +106,10 @@ public class Page
         Page? page = null;
 
         string query = @"
-        SELECT id, name, group_name, value
-        FROM pages
-        WHERE id = @id
-        ";
+SELECT id, name, group_name, value
+FROM pages
+WHERE id = @id
+";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {
@@ -133,10 +138,10 @@ public class Page
         List<Page> listPages = new List<Page>();
 
         string query = @"
-        SELECT id, name, group_name, value
-        FROM pages
-        WHERE group_name = @group_name
-        ";
+SELECT id, name, group_name, value
+FROM pages
+WHERE group_name = @group_name
+";
 
         using (SqliteCommand command = new SqliteCommand(query, Page.Conn))
         {

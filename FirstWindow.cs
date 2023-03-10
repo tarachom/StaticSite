@@ -1,6 +1,8 @@
 using Gtk;
 
 using Microsoft.Data.Sqlite;
+using System.Xml;
+using System.Xml.Xsl;
 
 namespace StaticSite;
 
@@ -33,12 +35,13 @@ class FirstWindow : Window
     enum Groups
     {
         PostgreSQL,
+        SQLite,
         CSharp,
         Gtk,
         XSLT
     }
 
-    int maxName = 30;
+    const int maxName = 30;
 
     public FirstWindow() : base("StaticSite")
     {
@@ -104,7 +107,7 @@ class FirstWindow : Window
     void AddColumn()
     {
         treeView.AppendColumn(new TreeViewColumn("Розділи", new CellRendererText(), "text", (int)Columns.Name));
-        treeView.AppendColumn(new TreeViewColumn("Код", new CellRendererText(), "text", (int)Columns.Code) { Visible = false });
+        treeView.AppendColumn(new TreeViewColumn("Код", new CellRendererText(), "text", (int)Columns.Code));
     }
 
     public void LoadGroups()
@@ -129,7 +132,6 @@ class FirstWindow : Window
             string smallName = page.Name.Length > maxName ? page.Name.Substring(0, maxName) : page.Name;
             treeStore.AppendValues(itemIter, smallName, page.ID);
         }
-
 
         IsExpand(itemIter);
     }
@@ -193,22 +195,31 @@ class FirstWindow : Window
 
         Toolbar toolbar = new Toolbar();
 
-        MenuToolButton addButton = new MenuToolButton(Stock.Add) { Label = "Додати", IsImportant = true, TooltipText = "Додати" };
+        MenuToolButton addButton = new MenuToolButton(Stock.Add) { TooltipText = "Додати" };
         addButton.Menu = AddSubMenu();
         addButton.Clicked += AddButtonClick;
         toolbar.Add(addButton);
 
-        ToolButton upButton = new ToolButton(Stock.Edit) { Label = "Редагувати", IsImportant = true, TooltipText = "Редагувати" };
+        ToolButton upButton = new ToolButton(Stock.Edit) { TooltipText = "Редагувати" };
         upButton.Clicked += EditButtonClick;
         toolbar.Add(upButton);
 
-        ToolButton copyButton = new ToolButton(Stock.Copy) { Label = "Копіювати", IsImportant = true, TooltipText = "Копіювати" };
+        ToolButton copyButton = new ToolButton(Stock.Copy) { TooltipText = "Копіювати" };
         copyButton.Clicked += CopyButtonClick;
         toolbar.Add(copyButton);
 
-        ToolButton deleteButton = new ToolButton(Stock.Delete) { Label = "Видалити", IsImportant = true, TooltipText = "Видалити" };
+        ToolButton deleteButton = new ToolButton(Stock.Delete) { TooltipText = "Видалити" };
         deleteButton.Clicked += DeleteButtonClick;
         toolbar.Add(deleteButton);
+
+        //Separator
+        ToolItem toolItemSeparator = new ToolItem();
+        toolItemSeparator.Add(new Separator(Orientation.Horizontal));
+        toolbar.Add(toolItemSeparator);
+
+        ToolButton buildButton = new ToolButton(Stock.Convert) { Label = "Збудувати", IsImportant = true, TooltipText = "Збудувати" };
+        buildButton.Clicked += BuildButtonClick;
+        toolbar.Add(buildButton);
 
         hBox.PackStart(toolbar, false, false, 2);
 
@@ -312,6 +323,81 @@ class FirstWindow : Window
             };
 
             CreateNotebookPage($"{item.Name} *", pageBox);
+        }
+    }
+
+    void BuildButtonClick(object? sender, EventArgs args)
+    {
+        string buildDir = AppContext.BaseDirectory + "html/";
+        string buildDatabaseXMl = AppContext.BaseDirectory + "database.xml";
+
+        XmlWriter xmlWriter = XmlWriter.Create(buildDatabaseXMl, new XmlWriterSettings() { Indent = true, Encoding = System.Text.Encoding.UTF8 });
+        xmlWriter.WriteStartDocument();
+        xmlWriter.WriteStartElement("root");
+
+        foreach (string groupName in Enum.GetNames<Groups>())
+        {
+            xmlWriter.WriteStartElement("group");
+            xmlWriter.WriteAttributeString("name", groupName);
+
+            foreach (Page page in Page.SelectPages(groupName))
+            {
+                xmlWriter.WriteStartElement("page");
+                xmlWriter.WriteAttributeString("id", page.ID.ToString());
+
+                xmlWriter.WriteStartElement("name");
+                xmlWriter.WriteString(page.Name);
+                xmlWriter.WriteEndElement(); //name
+
+                xmlWriter.WriteStartElement("value");
+                xmlWriter.WriteCData(page.Value);
+                xmlWriter.WriteEndElement(); //value
+
+                xmlWriter.WriteEndElement(); //page
+            }
+
+            xmlWriter.WriteEndElement(); //group
+        }
+
+        xmlWriter.WriteEndElement(); //root
+        xmlWriter.WriteEndDocument();
+        xmlWriter.Close();
+
+        //
+        //
+        //
+
+        XslCompiledTransform xsltCodeGnerator = new XslCompiledTransform();
+        xsltCodeGnerator.Load(AppContext.BaseDirectory + "xslt/template.xslt");
+
+        foreach (string groupName in Enum.GetNames<Groups>())
+        {
+            string itemBuildDir = buildDir + groupName + "/";
+
+            if (Directory.Exists(itemBuildDir))
+                Directory.Delete(itemBuildDir, true);
+
+            Directory.CreateDirectory(itemBuildDir);
+
+            int counter = 0;
+
+            foreach (Page page in Page.SelectPages(groupName))
+            {
+                XsltArgumentList xsltArgumentList = new XsltArgumentList();
+                xsltArgumentList.AddParam("ID", "", page.ID);
+                xsltArgumentList.AddParam("Group", "", groupName);
+                xsltArgumentList.AddParam("YearCreate", "", DateTime.Now.Year);
+
+                string fileBuildName = itemBuildDir + page.ID.ToString() + ".html";
+
+                FileStream fileStream = new FileStream(fileBuildName, FileMode.Create);
+                xsltCodeGnerator.Transform(buildDatabaseXMl, xsltArgumentList, fileStream);
+
+                if (counter == 0)
+                    File.Copy(fileBuildName, itemBuildDir + "index.html");
+
+                counter++;
+            }
         }
     }
 
