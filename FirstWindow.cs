@@ -34,12 +34,27 @@ class FirstWindow : Window
 
     enum Groups
     {
-        PostgreSQL,
-        SQLite,
-        CSharp,
-        Gtk,
-        XSLT
+        first,
+        storageandtrade,
+        configurator,
+        postgresql,
+        sqlite,
+        csharp,
+        gtk,
+        xslt
     }
+
+    Dictionary<string, string> GroupAlias = new Dictionary<string, string>()
+    {
+        { "first", "Головна" },
+        { "storageandtrade", "Зберігання та Торгівля" },
+        { "configurator", "Конфігуратор" },
+        { "postgresql", "PostgreSQL" },
+        { "sqlite", "SQLite" },
+        { "csharp", "CSharp" },
+        { "gtk", "Gtk" },
+        { "xslt", "Xslt" }
+    };
 
     const int maxName = 30;
 
@@ -87,14 +102,14 @@ class FirstWindow : Window
 
     #region SQL
 
-void OpenDB()
-{
-    Page.Conn = new SqliteConnection($"Data Source={AppContext.BaseDirectory}database.db;");
-    Page.Conn.Open();
+    void OpenDB()
+    {
+        Page.Conn = new SqliteConnection($"Data Source={AppContext.BaseDirectory}database.db;");
+        Page.Conn.Open();
 
-    Page.CreateDataBase();
-    Page.Vacuum();
-}
+        Page.CreateDataBase();
+        Page.Vacuum();
+    }
 
     void CloseDB()
     {
@@ -341,6 +356,7 @@ void OpenDB()
         {
             xmlWriter.WriteStartElement("group");
             xmlWriter.WriteAttributeString("name", groupName);
+            xmlWriter.WriteAttributeString("alias", GroupAlias.ContainsKey(groupName) ? GroupAlias[groupName] : groupName);
 
             foreach (Page page in Page.SelectPages(groupName))
             {
